@@ -4,8 +4,11 @@ import pygame as p
 from pygame.locals import *
 import sys
 
+# for compilation to exe enter: pyinstaller --noconsole game_of_life.py
+
 class LifeGame:
     def __init__(self):
+        """initialization variables"""
         self.width = 25
         self.height = 25
         # more - worse for cells
@@ -27,6 +30,7 @@ class LifeGame:
             row_counter += 1
 
     def draw(self):
+        """this method draw simulation"""
         # fill layers
         root.fill(BLACK)
         capture.fill(WHITE)
@@ -78,6 +82,7 @@ class LifeGame:
         display.blit(root, (0, 50))
 
     def spawn_life(self):
+        """this method spawn life by random coordinates by given count of times"""
         rand_coords = []
         counter = 0
         for i in range(lg.start_spawn):
@@ -92,6 +97,7 @@ class LifeGame:
 
 
     def get_available_coords(self, x, y):
+        """this method return available count of coord for given coordinate"""
         available_coords = [[x-1, y], [x+1, y], [x, y+1], [x, y-1]]
         coords = []
         for i in range(len(available_coords)):
@@ -103,6 +109,7 @@ class LifeGame:
         return coords
 
     def count_average_age(self):
+        """return average age for all lifes"""
         average_age = 0
         counter = 1
         for cell in self.cells:
@@ -111,6 +118,7 @@ class LifeGame:
         return average_age / counter
 
     def add_life_to_matrix(self, coords):
+        """this method add new coords to matrix and cells"""
         cells_arr = []
         for x, y in coords:
             chance = random.randint(0, self.birth_level)
@@ -121,12 +129,14 @@ class LifeGame:
                     self.cells.append([x, y, self.iteration])
 
     def del_life(self):
+        """this method randomly delete life"""
         for i in range(lg.death_level):
             del_x = random.randint(0, lg.width-1)
             del_y = random.randint(0, lg.height-1)
             self.matrix[del_y][del_x] = self.null
 
     def del_dead_cells(self):
+        """this method delete cells value which in matrix equal '0'"""
         for y in range(self.height):
             for x in range(self.width):
                 if self.matrix[y][x] == self.null:
@@ -179,3 +189,5 @@ while True:
             sys.exit(1)
     p.display.update()
     clock.tick(FPS)
+    if __name__ == '__main__':
+        main()
