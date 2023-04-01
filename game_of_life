@@ -8,7 +8,7 @@ class LifeGame:
         self.width = 25
         self.height = 25
         # more - worse
-        self.death_level = 0
+        self.death_level = 2
         # less - better
         self.birth_level = 200
         # how many lives will be spawn on start
@@ -16,12 +16,14 @@ class LifeGame:
         # cell coord, age
         self.cells = []
         self.matrix = []
+        self.life = 1
+        self.null = 0
         self.iteration = 0
         row_counter = 0
         for y in range(self.height):
             self.matrix.append([])
             for x in range(self.width):
-                self.matrix[row_counter].append(0)
+                self.matrix[row_counter].append(self.null)
             row_counter += 1
 
     def draw(self):
@@ -37,7 +39,7 @@ class LifeGame:
 
         for y in range(0, self.height):
             for x in range(0, self.width):
-                if self.matrix[y][x] == 1:
+                if self.matrix[y][x] == self.life:
                     p.draw.rect(root, RED, [width * x, height * y, width, height])
                 else:
                     p.draw.rect(root, WHITE, [width * x, height * y, width, height])
@@ -54,7 +56,7 @@ class LifeGame:
         empty_cells = cnt[1]
 
         # texts
-        if empty_cells != 0:
+        if empty_cells != self.null:
             txt_percent_of_life = font.render(str(round((life_cells / 100) * (100 / ((self.width * self.height) / 100)), 2))+"% of life", True, BLACK, WHITE)
         else:
             txt_percent_of_life = font.render("100% of life", True, BLACK, WHITE)
@@ -85,7 +87,7 @@ class LifeGame:
             counter += 1
 
         for i in range(len(rand_coords)):
-            self.matrix[rand_coords[i][1]][rand_coords[i][0]] = 1
+            self.matrix[rand_coords[i][1]][rand_coords[i][0]] = self.life
         return rand_coords
 
 
@@ -113,23 +115,21 @@ class LifeGame:
         for x, y in coords:
             chance = random.randint(0, self.birth_level)
             if chance == 0:
-
-                self.matrix[y][x] = 1
+                self.matrix[y][x] = self.life
                 if [x, y] not in cells_arr:
                     cells_arr.append([x, y])
                     self.cells.append([x, y, self.iteration])
-        print(self.cells)
 
     def del_life(self):
         for i in range(lg.death_level):
             del_x = random.randint(0, lg.width-1)
             del_y = random.randint(0, lg.height-1)
-            self.matrix[del_y][del_x] = 0
+            self.matrix[del_y][del_x] = self.null
 
     def del_dead_cells(self):
         for y in range(self.height):
             for x in range(self.width):
-                if self.matrix[y][x] == 0:
+                if self.matrix[y][x] == self.null:
                     for i in range(len(self.cells)):
                         if self.cells[i][0] == x and self.cells[i][1] == y:
                             del self.cells[i]
@@ -165,7 +165,7 @@ while True:
 
     for y in range(lg.height):
         for x in range(lg.width):
-            if lg.matrix[y][x] == 1:
+            if lg.matrix[y][x] == lg.life:
                 coords.append(lg.get_available_coords(x, y))
     coords = sum(coords, [])
     lg.del_life()
