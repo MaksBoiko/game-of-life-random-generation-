@@ -2,18 +2,18 @@ import random
 from collections import Counter
 import pygame as p
 from pygame.locals import *
+import sys
 
 class LifeGame:
     def __init__(self):
         self.width = 25
         self.height = 25
-        # more - worse
+        # more - worse for cells
         self.death_level = 2
-        # less - better
+        # less - better for cells
         self.birth_level = 200
         # how many lives will be spawn on start
         self.start_spawn = 1
-        # cell coord, age
         self.cells = []
         self.matrix = []
         self.life = 1
@@ -68,10 +68,10 @@ class LifeGame:
         # capture
         capture.blit(txt_percent_of_life, pos)
         # description
-        description.blit(txt_life_cells, (5, 0))
-        description.blit(txt_fps, (5, 30))
-        description.blit(txt_average_age, (5, 60))
-        description.blit(txt_year, (5, 90))
+        description.blit(txt_life_cells, (5, 5))
+        description.blit(txt_fps, (5, 35))
+        description.blit(txt_average_age, (5, 65))
+        description.blit(txt_year, (5, 95))
         # display
         display.blit(capture, (0, 0))
         display.blit(description, (0, 550))
@@ -176,6 +176,6 @@ while True:
     # for exit
     for i in p.event.get():
         if i.type == QUIT:
-            quit()
+            sys.exit(1)
     p.display.update()
     clock.tick(FPS)
