@@ -2,14 +2,18 @@ import random
 import time
 import os
 from collections import Counter
+import pygame as p
+from pygame.locals import *
+import numpy as np
 
 class LifeGame:
     def __init__(self):
-        self.width = 60
-        self.height = 10
-        self.death_level = 0 # more - worse
-        self.birth_level = 10 # less - better
+        self.width = 25
+        self.height = 25
+        self.death_level = 100 # more - worse
+        self.birth_level = 1 # less - better
         self.start_spawn = 1 # how many lifes will be spawn on start
+        self.cells = [] # cell coord, age
         self.matrix = []
         self.iteration = 0
         row_counter = 0
@@ -20,14 +24,27 @@ class LifeGame:
             row_counter += 1
 
 
-    def print(self):
+    def draw(self):
         life_cells = 0
         empty_cells = 0
+        # Заполняем экран белым цветом
+        root.fill(BLACK)
+        capture.fill(WHITE)
+        description.fill(WHITE)
+        # Рисуем сетку
+        for i in range(0, root.get_height() // (root.get_height()//self.height)):
+            p.draw.line(root, BLACK, (0, i * (root.get_height()//self.height)), (root.get_width(), i * (root.get_height()//self.height)))
+        for j in range(0, root.get_width() // (root.get_width()//self.width)):
+            p.draw.line(root, BLACK, (j * (root.get_width()//self.width), 0), (j * (root.get_width()//self.width), root.get_height()))
 
-        print("---" * self.width)
-        for row in self.matrix:
-            print(f"| {'  '.join(row)} |")
-        print("---" * self.width)
+        width = (root.get_width() // self.width)
+        height = (root.get_height() // self.height)
+        for y in range(0, self.height):
+            for x in range(0, self.width):
+                COLOR = WHITE
+                if self.matrix[y][x] == "*":
+                    COLOR = RED
+                p.draw.rect(root, COLOR, [width * x, height * y, width, height])
 
         cnt = Counter()
         for row in self.matrix:
@@ -36,10 +53,24 @@ class LifeGame:
         empty_cells = cnt[' ']
 
         if empty_cells != 0:
-            print(round((life_cells/100), 2)*(100/((self.width*self.height)/100)), "% of life")
+            txt_percent_of_life = font.render(str(round((life_cells / 100) * (100 / ((self.width * self.height) / 100)), 2))+"% of life", True, RED, WHITE)
         else:
-            print("100 % of life")
-        print(lg.iteration)
+            txt_percent_of_life = font.render("100% of life", True, RED, WHITE)
+
+        txt_life_cells = medium_font.render("Count of cells: "+str(life_cells), True, RED, WHITE)
+        txt_fps = medium_font.render("FPS: " + str(round(clock.get_fps(), 1)), True, RED, WHITE)
+        txt_average_age = medium_font.render("Average age: " + str(round(self.count_average_age(), 2)), True, RED, WHITE)
+        txt_year = medium_font.render("Year: " + str(self.iteration), True, RED, WHITE)
+        pos = txt_percent_of_life.get_rect(center=(capture.get_width()//2, capture.get_height()//2))
+        capture.blit(txt_percent_of_life, pos)
+        description.blit(txt_life_cells, (0, 0))
+        description.blit(txt_fps, (0, 30))
+        description.blit(txt_average_age, (0, 60))
+        description.blit(txt_year, (0, 90))
+        display.blit(capture, (0, 0))
+        display.blit(description, (0, 550))
+        display.blit(root, (0, 50))
+
 
     def spawn_life(self):
         rand_coords = []
@@ -54,6 +85,7 @@ class LifeGame:
             self.matrix[rand_coords[i][1]][rand_coords[i][0]] = "*"
         return rand_coords
 
+
     def get_available_coords(self, x, y):
         available_coords = [[x-1, y], [x+1, y], [x, y+1], [x, y-1]]
         coords = []
@@ -65,36 +97,82 @@ class LifeGame:
 
         return coords
 
-    def add_life_to_matrix(self, coords):
-        coords = sum(coords, [])
+    def count_average_age(self):
+        average_age = 0
+        counter = 1
+        for cell in self.cells:
+            counter += 1
+            average_age += self.iteration-cell[2]
+        return average_age / counter
 
+    def add_life_to_matrix(self, coords):
+        cells_arr = []
         for x, y in coords:
-            chance = random.randint(0, lg.birth_level)
+            chance = random.randint(0, self.birth_level)
             if chance == 1:
                 self.matrix[y][x] = '*'
+                if [x, y] not in cells_arr:
+                    cells_arr.append([x, y])
+                    self.cells.append([x, y, self.iteration])
+
     def del_life(self):
         for i in range(lg.death_level):
             del_x = random.randint(0, lg.width-1)
             del_y = random.randint(0, lg.height-1)
             self.matrix[del_y][del_x] = " "
 
+    def del_dead_cells(self):
+        for y in range(self.height):
+            for x in range(self.width):
+                if self.matrix[y][x] == " ":
+                    for i in range(len(self.cells)):
+                        if self.cells[i][0] == x and self.cells[i][1] == y:
+                            del self.cells[i]
+                            break
+        print(len(self.cells))
 # age, start spawn, count of birth
 #
 lg = LifeGame()
 
 lg.spawn_life()
+p.init()
+# Константы цветов RGB
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+font = p.font.SysFont('arial', 50)
+medium_font = p.font.SysFont('arial', 25)
+small_font = p.font.SysFont('arial', 12)
+# Создаем окно
+display = p.display.set_mode((500, 700))
+root = p.Surface((500, 500))
+capture = p.Surface((500, 50))
+description = p.Surface((500, 200))
+display.fill(WHITE)
+p.display.set_caption("Game of life")
+FPS = 10
+clock = p.time.Clock()
 
 while True:
     coords = []
+    lg.draw()
+
     for y in range(lg.height):
         for x in range(lg.width):
             if lg.matrix[y][x] == "*":
                 coords.append(lg.get_available_coords(x, y))
+    coords = sum(coords, [])
     lg.del_life()
-
-    lg.add_life_to_matrix(coords)
     lg.iteration += 1
+    lg.add_life_to_matrix(coords)
+    lg.del_dead_cells()
 
-    lg.print()
-    time.sleep(0.01)
-    os.system('cls')
+
+    # Нужно чтобы виндовс не думал что программа "не отвечает"
+    for i in p.event.get():
+        if i.type == QUIT:
+            quit()
+    p.display.update()
+    clock.tick(FPS)
