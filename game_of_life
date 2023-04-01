@@ -189,5 +189,3 @@ while True:
             sys.exit(1)
     p.display.update()
     clock.tick(FPS)
-    if __name__ == '__main__':
-        main()
