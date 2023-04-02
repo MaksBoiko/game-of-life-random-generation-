@@ -9,12 +9,14 @@ import sys
 class LifeGame:
     def __init__(self):
         """initialization variables"""
-        self.width = 25
-        self.height = 25
+        self.width = 5
+        self.height = 5
         # more - worse for cells
-        self.death_level = 2
+        self.death_level = 3
         # less - better for cells
-        self.birth_level = 200
+        self.birth_level = 15
+        # max age for cell
+        self.max_age = 100
         # how many lives will be spawn on start
         self.start_spawn = 1
         self.cells = []
@@ -22,12 +24,7 @@ class LifeGame:
         self.life = 1
         self.null = 0
         self.iteration = 0
-        row_counter = 0
-        for y in range(self.height):
-            self.matrix.append([])
-            for x in range(self.width):
-                self.matrix[row_counter].append(self.null)
-            row_counter += 1
+        self.matrix = [[0 for _ in range(self.width)] for _ in range(self.height)]
 
     def draw(self):
         """this method draw simulation"""
@@ -45,8 +42,10 @@ class LifeGame:
             for x in range(0, self.width):
                 if self.matrix[y][x] == self.life:
                     p.draw.rect(root, RED, [width * x, height * y, width, height])
-                else:
+                elif self.matrix[y][x] == self.null:
                     p.draw.rect(root, WHITE, [width * x, height * y, width, height])
+                else:
+                    p.draw.rect(root, BLACK, [width * x, height * y, width, height])
 
         # draw lines
         p.draw.line(root, BLACK, (0, 0), (root.get_width(), 0))
@@ -60,22 +59,25 @@ class LifeGame:
         empty_cells = cnt[1]
 
         # texts
-        if empty_cells != self.null:
+        if empty_cells != 0:
             txt_percent_of_life = font.render(str(round((life_cells / 100) * (100 / ((self.width * self.height) / 100)), 2))+"% of life", True, BLACK, WHITE)
+        elif life_cells == 0:
+            txt_percent_of_life = font.render("life is extinct!", True, BLACK, WHITE)
         else:
             txt_percent_of_life = font.render("100% of life", True, BLACK, WHITE)
+
         txt_life_cells = medium_font.render("Count of cells: {}/{}".format(life_cells, self.width * self.height), True, BLACK, WHITE)
-        txt_fps = medium_font.render("FPS: {}".format(round(clock.get_fps(), 1)), True, BLACK, WHITE)
-        txt_average_age = medium_font.render("Average age: {}".format(round(self.count_average_age(), 2)), True, BLACK, WHITE)
+        txt_fps = small_font.render("FPS: {}".format(round(clock.get_fps(), 1)), True, BLACK, WHITE)
+        txt_average_age = medium_font.render("Average age: {}/{}".format(round(self.count_average_age(), 2), self.max_age), True, BLACK, WHITE)
         txt_year = medium_font.render("Year: {}".format(self.iteration), True, BLACK, WHITE)
         pos = txt_percent_of_life.get_rect(center=(capture.get_width()//2, capture.get_height()//2))
         # capture
         capture.blit(txt_percent_of_life, pos)
         # description
         description.blit(txt_life_cells, (5, 5))
-        description.blit(txt_fps, (5, 35))
-        description.blit(txt_average_age, (5, 65))
-        description.blit(txt_year, (5, 95))
+        description.blit(txt_fps, (430, 130))
+        description.blit(txt_average_age, (5, 35))
+        description.blit(txt_year, (5, 65))
         # display
         display.blit(capture, (0, 0))
         display.blit(description, (0, 550))
@@ -85,7 +87,7 @@ class LifeGame:
         """this method spawn life by random coordinates by given count of times"""
         rand_coords = []
         counter = 0
-        for i in range(lg.start_spawn):
+        for _ in range(lg.start_spawn):
             rand_coords.append([])
             rand_coords[counter].append(random.randint(0, self.width-1))
             rand_coords[counter].append(random.randint(0, self.height-1))
@@ -103,9 +105,8 @@ class LifeGame:
         for i in range(len(available_coords)):
             if available_coords[i][0] <= self.width-1 and available_coords[i][0] >= 0\
                 and available_coords[i][1] <= self.height-1 and available_coords[i][1] >= 0\
-                and self.matrix[available_coords[i][1]][available_coords[i][0]] == 0:
+                and self.matrix[available_coords[i][1]][available_coords[i][0]] == self.null:
                     coords.append([available_coords[i][0], available_coords[i][1]])
-
         return coords
 
     def count_average_age(self):
@@ -116,6 +117,7 @@ class LifeGame:
             counter += 1
             average_age += self.iteration-cell[2]
         return average_age / counter
+
 
     def add_life_to_matrix(self, coords):
         """this method add new coords to matrix and cells"""
@@ -128,15 +130,41 @@ class LifeGame:
                     cells_arr.append([x, y])
                     self.cells.append([x, y, self.iteration])
 
+
     def del_life(self):
         """this method randomly delete life"""
-        for i in range(lg.death_level):
+        for _ in range(lg.death_level):
             del_x = random.randint(0, lg.width-1)
             del_y = random.randint(0, lg.height-1)
             self.matrix[del_y][del_x] = self.null
 
-    def del_dead_cells(self):
-        """this method delete cells value which in matrix equal '0'"""
+        for y in range(self.height):
+            for x in range(self.width):
+                for i in range(len(self.cells)):
+                    if self.iteration-self.cells[i][2] >= self.max_age:
+                        chance_of_die = random.randint(0, 2)
+                        if chance_of_die == 0:
+                            self.matrix[y][x] = self.null
+                            del self.cells[i]
+                            break
+                    elif self.iteration-self.cells[i][2] >= self.max_age//2:
+                        chance_of_die = random.randint(0, 16)
+                        if chance_of_die == 0:
+                            self.matrix[y][x] = self.null
+                            del self.cells[i]
+                            break
+                    elif self.iteration-self.cells[i][2] >= self.max_age//4:
+                        chance_of_die = random.randint(0, 256)
+                        if chance_of_die == 0:
+                            self.matrix[y][x] = self.null
+                            del self.cells[i]
+                            break
+                    elif self.iteration-self.cells[i][2] >= self.max_age//8:
+                        chance_of_die = random.randint(0, 1024)
+                        if chance_of_die == 0:
+                            self.matrix[y][x] = self.null
+                            del self.cells[i]
+                            break
         for y in range(self.height):
             for x in range(self.width):
                 if self.matrix[y][x] == self.null:
@@ -166,7 +194,7 @@ capture = p.Surface((500, 50))
 description = p.Surface((500, 200))
 display.fill(WHITE)
 p.display.set_caption("Game of life")
-FPS = 100
+FPS = 10
 clock = p.time.Clock()
 
 while True:
@@ -181,7 +209,6 @@ while True:
     lg.del_life()
     lg.iteration += 1
     lg.add_life_to_matrix(coords)
-    lg.del_dead_cells()
 
     # for exit
     for i in p.event.get():
